@@ -1,1 +1,1 @@
-# extensions
+# Fusion PBX modified extensions app
