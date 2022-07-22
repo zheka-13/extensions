@@ -3000,4 +3000,7 @@ $text['button-call_forward']['ru-ru'] = "Переадресация";
 $text['button-call_forward']['sv-se'] = "Vidarekoppling";
 $text['button-call_forward']['uk-ua'] = "Переадресація";
 
+$text['header-ring_groups']['en-us'] = "Ring groups";
+$text['title-delete-ring_groups']['en-us'] = "Remove extension from the ring group";
+$text['confirm-delete-ring_groups']['en-us'] = "Are you sure you want to remove extension from the ring group?";
 ?>

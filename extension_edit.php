@@ -53,7 +53,22 @@
 		$action = "add";
 	}
 
-//get total extension count from the database, check limit, if defined
+    if (!empty($_POST['action']) && $_POST['action'] == 'remove_from_ring_group'){
+        $result = [
+            "result" => "ERROR"
+        ];
+        $database = new database;
+        $query = "delete from v_ring_group_destinations where ring_group_destination_uuid = :uuid and domain_uuid = :domain_uuid";
+        $database->execute($query, [
+                "uuid" => $_POST['uuid'],
+                "domain_uuid" => $_SESSION['domain_uuid']
+        ]);
+        $result['result'] = 'OK';
+        echo json_encode($result);
+        die();
+    }
+
+    //get total extension count from the database, check limit, if defined
 	if ($action == 'add') {
 		if ($_SESSION['limit']['extensions']['numeric'] != '') {
 			$sql = "select count(*) ";
@@ -2220,6 +2235,34 @@
 	echo "<input type='hidden' name='".$token['name']."' value='".$token['hash']."'>\n";
 
 	echo "</form>";
+
+    if (is_uuid($_REQUEST["id"])) {
+        $parameters = [
+            'domain_uuid' => $_SESSION['domain_uuid'],
+            "dst_num" => $extension
+        ];
+        $ring_groups = $database->select("select ring_group_destination_uuid, ring_group_uuid, ring_group_name from v_ring_group_destinations
+            join (select ring_group_uuid as rg_uuid, ring_group_name from v_ring_groups) a on (a.rg_uuid=ring_group_uuid)
+            where domain_uuid = :domain_uuid
+            and destination_number = :dst_num ", $parameters);
+        echo "<div style='width:20%;height:400px;border:1px solid black; position: fixed;top: 150px; right: 5%;background-color: white'>";
+        echo "<table style='width:100%'>";
+        echo "<tr><th style='text-align:center; font-size:14px;'>".$text['header-ring_groups']."</th></tr>";
+
+        foreach ($ring_groups as $row) {
+            echo "<tr id='ring_group".$row['ring_group_destination_uuid']."'>";
+            echo "<td style='padding: 10px;border-bottom: 1px solid gray;font-weight: bold;font-size:14px;'>";
+            echo $row['ring_group_name'];
+            echo "&nbsp;&nbsp;&nbsp;<span class='fas fa-minus' 
+                onclick='remove_from_ring_group(\"".$row['ring_group_destination_uuid']."\")' style='cursor:pointer;color:red' title='".$text['title-delete-ring_groups']."'></span>";
+            echo "</td>";
+            echo "</tr>";
+
+        }
+        echo "</table></div>";
+    }
+
+
 	echo "<script>\n";
 
 //hide password fields before submit
@@ -2228,7 +2271,29 @@
 	echo "		$('form#frm').submit();\n";
 	echo "	}\n";
 	echo "</script>\n";
+?>
+<script>
+    function remove_from_ring_group (uuid){
+        var yes = confirm('<?php echo $text['confirm-delete-ring_groups']; ?>');
+        if (yes){
+            $.ajax({
+                url: "/app/extensions/extension_edit.php",
+                type: "post",
+                data: "uuid=" + uuid + "&action=remove_from_ring_group"
+            }).done(function (data) {
+                var json = JSON.parse(data);
+                console.log(json);
+                if (json.result == 'OK'){
+                    $("#ring_group"+uuid).remove();
+                }
 
+            }).fail(function () {
+
+            });
+        }
+    }
+</script>
+<?php
 //include the footer
 	require_once "resources/footer.php";
 
